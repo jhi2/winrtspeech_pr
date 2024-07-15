@@ -3,7 +3,12 @@ import logging
 
 from win32more import FAILED, WinError
 from win32more.asyncui import async_start_runner, async_task
-from win32more.Windows.Win32.System.WinRT import RO_INIT_SINGLETHREADED, RoInitialize, RoUninitialize
+from win32more.Windows.Win32.System.WinRT import (
+    RO_INIT_MULTITHREADED,
+    RO_INIT_SINGLETHREADED,
+    RoInitialize,
+    RoUninitialize,
+)
 from win32more.Windows.Win32.UI.WindowsAndMessaging import (
     MSG,
     DispatchMessage,
@@ -15,7 +20,7 @@ from win32more.Windows.Win32.UI.WindowsAndMessaging import (
 logger = logging.getLogger()
 
 
-def start(awaitable):
+def start_sta(awaitable):
     hr = RoInitialize(RO_INIT_SINGLETHREADED)
     if FAILED(hr):
         raise WinError(hr)
@@ -34,6 +39,32 @@ def start(awaitable):
     RoUninitialize()
 
     return future.result()
+
+
+def start_mta(awaitable):
+    hr = RoInitialize(RO_INIT_MULTITHREADED)
+    if FAILED(hr):
+        raise WinError(hr)
+
+    async def this_task_is_created_to_release_gil_to_allow_callback(task):
+        while not task.done():
+            await asyncio.sleep(1)
+
+    async def worker():
+        task1 = asyncio.get_event_loop().create_task(awaitable)
+        task2 = asyncio.get_event_loop().create_task(this_task_is_created_to_release_gil_to_allow_callback(task1))
+        await asyncio.wait([task1, task2])
+        return task1.result()
+
+    r = asyncio.run(worker())
+
+    RoUninitialize()
+
+    return r
+
+
+def start(awaitable):
+    return start_sta(awaitable)
 
 
 async def run_main_task(awaitable, future):
