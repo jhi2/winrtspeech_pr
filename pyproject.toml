@@ -12,7 +12,7 @@ authors = [
     { name = "Yukihiro Nakadaira", email = "yukihiro.nakadaira@gmail.com" },
 ]
 dependencies = [
-    "win32more @ git+https://github.com/ynkdir/py-win32more.git"
+    "win32more"
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
