@@ -24,12 +24,13 @@ async def save_stream(stream, outfile):
         reader.ReadBytes(buf)
     Path(outfile).write_bytes(bytes(buf))
 
-
+# NOTE: With RO_INIT_MULTITHREADED, callback (MediaEnded) can be called in other thread.
 async def play_stream(stream):
     with MediaPlayer() as player:
         player.Source = MediaSource.CreateFromStream(stream, stream.ContentType)
-        future = asyncio.get_event_loop().create_future()
-        player.MediaEnded += lambda *_: future.set_result(0)
+        loop = asyncio.get_event_loop()
+        future = loop.create_future()
+        player.MediaEnded += lambda sender, e: loop.call_soon_threadsafe(future.set_result, 0) and None
         player.Play()
         await future
 

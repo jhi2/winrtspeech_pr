@@ -46,17 +46,7 @@ def start_mta(awaitable):
     if FAILED(hr):
         raise WinError(hr)
 
-    async def this_task_is_created_to_release_gil_to_allow_callback(task):
-        while not task.done():
-            await asyncio.sleep(1)
-
-    async def worker():
-        task1 = asyncio.get_event_loop().create_task(awaitable)
-        task2 = asyncio.get_event_loop().create_task(this_task_is_created_to_release_gil_to_allow_callback(task1))
-        await asyncio.wait([task1, task2])
-        return task1.result()
-
-    r = asyncio.run(worker())
+    r = asyncio.run(awaitable)
 
     RoUninitialize()
 
@@ -64,7 +54,7 @@ def start_mta(awaitable):
 
 
 def start(awaitable):
-    return start_sta(awaitable)
+    return start_mta(awaitable)
 
 
 async def run_main_task(awaitable, future):
