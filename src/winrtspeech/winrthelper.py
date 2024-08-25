@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from win32more import FAILED, WinError
-from win32more.asyncui import async_start_runner, async_task
+from win32more.asyncui import async_start_runner
 from win32more.Windows.Win32.System.WinRT import (
     RO_INIT_MULTITHREADED,
     RO_INIT_SINGLETHREADED,
@@ -25,11 +25,11 @@ def start_sta(awaitable):
     if FAILED(hr):
         raise WinError(hr)
 
-    async_start_runner()
+    loop = async_start_runner()
 
-    future = asyncio.get_event_loop().create_future()
+    future = loop.create_future()
 
-    async_task(run_main_task, [awaitable, future])
+    task = loop.create_task(run_main_task(awaitable, future))
 
     msg = MSG()
     while GetMessage(msg, 0, 0, 0) > 0:
