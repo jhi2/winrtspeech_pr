@@ -8,6 +8,12 @@ from win32more.Windows.Media.SpeechSynthesis import SpeechSynthesizer
 from win32more.Windows.Storage.Streams import DataReader
 
 from winrtspeech.winrthelper import start
+class PythonicArgHelper():
+    def __init__(message,voice=None,out=None,ssml=None):
+        self.message = message
+        self.voice = voice
+        self.out = out
+        self.ssml = ssml
 
 
 def find_voice(name):
@@ -90,3 +96,7 @@ async def main_async():
 
 def main():
     return start(main_async())
+def play_speech(message ->str, voice=None, out=None, ssml=None):
+    args = PythonicArgHelper(message, voice=voice, out=out, ssml=None)
+    command_speech(args)
+    
